@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BorrowingDetail extends Model
 {
+    protected $fillable = ['borrowing_id', 'book_id', 'quantity'];
     public function borrowing(): BelongsTo
     {
         return $this->belongsTo(Borrowing::class);
