@@ -2,31 +2,38 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'email', 'password', 'role'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    public function borrowings(): HasMany
-    {
-    return $this->hasMany(Borrowing::class);
-    }
-    
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * 
-     */
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'role',
+    ];
+
+    public function borrowings(): HasMany
+    {
+        return $this->hasMany(Borrowing::class);
+    }
+
+    // Helper method untuk role authorization
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isPetugas(): bool
+    {
+        return $this->role === 'petugas';
+    }
+
     protected function casts(): array
     {
         return [

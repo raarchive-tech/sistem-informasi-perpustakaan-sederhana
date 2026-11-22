@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->date('borrow_date');
             $table->date('due_date');
-            $table->date('return_date');
+            $table->date('return_date')->nullable();
             $table->enum('status', ['borrowed', 'returned'])->default('borrowed');
             $table->timestamps();
         });

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Member extends Model
 {
+    protected $fillable = ['member_code', 'name'];
     public function borrowings(): HasMany
     {
         return $this->hasMany(Borrowing::class);
