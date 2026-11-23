@@ -7,35 +7,53 @@ use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
-    // 1. Menampilkan daftar anggota
-    public function index()
+    // 1. Menampilkan daftar anggota + pencarian
+    public function index(Request $request)
     {
-        $members = Member::latest()->paginate(10);
+        $search = $request->input('search');
+
+        $members = Member::when($search, function ($query, $search) {
+                $query->where('member_code', 'like', "%{$search}%")
+                      ->orWhere('name', 'like', "%{$search}%");
+            })
+            ->oldest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('members.index', compact('members'));
     }
 
-    // 2. Menampilkan form tambah anggota
+    // 2. Menampilkan form tambah anggota dengan kode otomatis
     public function create()
     {
-        return view('members.create');
+        $lastMember = Member::orderBy('id', 'desc')->first();
+        $nextNumber = $lastMember ? ($lastMember->id + 1) : 1;
+        $nextCode = 'MBR-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
+        return view('members.create', compact('nextCode'));
     }
 
     // 3. Menyimpan anggota baru
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'member_code' => 'required|string|max:255|unique:members,member_code',
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\.\',\-]+$/'],
+        ], [
+            'name.regex' => 'Nama anggota hanya boleh berisi huruf (tidak boleh angka).',
         ]);
 
+        // Generate kode member otomatis yang konsisten (MBR-001, MBR-002, dst.)
+        $lastMember = Member::orderBy('id', 'desc')->first();
+        $nextNumber = $lastMember ? ($lastMember->id + 1) : 1;
+        $memberCode = 'MBR-' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
         $member = new Member();
-        $member->member_code = $validated['member_code'];
+        $member->member_code = $memberCode;
         $member->name = $validated['name'];
         $member->save();
 
         return redirect()->route('members.index')
-            ->with('success', 'Anggota berhasil ditambahkan.');
+            ->with('success', 'Anggota berhasil ditambahkan dengan kode ' . $memberCode . '.');
     }
 
     // 4. Menampilkan detail anggota
@@ -54,11 +72,12 @@ class MemberController extends Controller
     public function update(Request $request, Member $member)
     {
         $validated = $request->validate([
-            'member_code' => 'required|string|max:255|unique:members,member_code,' . $member->id,
-            'name' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\.\',\-]+$/'],
+        ], [
+            'name.regex' => 'Nama anggota hanya boleh berisi huruf (tidak boleh angka).',
         ]);
 
-        $member->member_code = $validated['member_code'];
+        // Kode member tetap dipertahankan agar tidak berubah sembarangan
         $member->name = $validated['name'];
         $member->save();
 

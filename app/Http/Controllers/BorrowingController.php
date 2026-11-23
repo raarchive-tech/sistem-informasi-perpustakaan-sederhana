@@ -2,21 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Book;
 use App\Models\Borrowing;
 use App\Models\BorrowingDetail;
-use App\Models\Book;
 use App\Models\Member;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BorrowingController extends Controller
 {
     // Menampilkan daftar peminjaman
-    public function index()
+    public function index(Request $request)
     {
+        $search = $request->input('search');
+
         $borrowings = Borrowing::with(['member', 'user'])
-            ->latest()
-            ->paginate(10);
+            ->when($search, function ($query, $search) {
+                $query->where('status', 'like', "%{$search}%")
+                    ->orWhereHas('member', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('member_code', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->oldest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('borrowings.index', compact('borrowings'));
     }
