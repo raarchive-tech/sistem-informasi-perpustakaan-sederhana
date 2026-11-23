@@ -11,7 +11,7 @@ class UserController extends Controller
     // Menampilkan daftar pengguna
     public function index()
     {
-        $users = User::latest()->paginate(10);
+        $users = User::oldest()->paginate(10);
 
         return view('users.index', compact('users'));
     }
@@ -26,15 +26,27 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email',
+            'name'     => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\.\',\-]+$/'],
+            'email'    => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8',
+            'role'     => 'required|in:admin,petugas',
+        ], [
+            'name.required'     => 'Nama pengguna wajib diisi.',
+            'name.regex'        => 'Nama pengguna hanya boleh berisi huruf (tidak boleh angka).',
+            'email.required'    => 'Email wajib diisi.',
+            'email.email'       => 'Format email tidak valid (contoh: nama@gmail.com).',
+            'email.unique'      => 'Email sudah terdaftar, silakan gunakan email lain.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min'      => 'Password minimal harus 8 karakter.',
+            'role.required'     => 'Role pengguna wajib dipilih.',
+            'role.in'           => 'Role hanya boleh Admin atau Petugas.',
         ]);
 
         $user = new User();
         $user->name = $validated['name'];
         $user->email = $validated['email'];
         $user->password = Hash::make($validated['password']);
+        $user->role = $validated['role'];
         $user->save();
 
         return redirect()->route('users.index')
@@ -57,13 +69,24 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'name'     => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\.\',\-]+$/'],
+            'email'    => 'required|email|max:255|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8',
+            'role'     => 'required|in:admin,petugas',
+        ], [
+            'name.required'  => 'Nama pengguna wajib diisi.',
+            'name.regex'     => 'Nama pengguna hanya boleh berisi huruf (tidak boleh angka).',
+            'email.required' => 'Email wajib diisi.',
+            'email.email'    => 'Format email tidak valid (contoh: nama@gmail.com).',
+            'email.unique'   => 'Email sudah digunakan oleh pengguna lain.',
+            'password.min'   => 'Password baru minimal harus 8 karakter.',
+            'role.required'  => 'Role pengguna wajib dipilih.',
+            'role.in'        => 'Role hanya boleh Admin atau Petugas.',
         ]);
 
         $user->name = $validated['name'];
         $user->email = $validated['email'];
+        $user->role = $validated['role'];
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);

@@ -9,14 +9,24 @@ use Illuminate\Http\Request;
 class BookController extends Controller
 {
     // 1. Menampilkan daftar buku
-    public function index()
-    {
-        $books = Book::with('category')
-            ->latest()
-            ->paginate(10);
+    public function index(Request $request)
+{
+    $search = $request->input('search');
 
-        return view('books.index', compact('books'));
-    }
+    $books = Book::with('category')
+        ->when($search, function ($query, $search) {
+            $query->where('title', 'like', "%{$search}%")
+                  ->orWhere('author', 'like', "%{$search}%")
+                  ->orWhereHas('category', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+        })
+        ->oldest()
+        ->paginate(10)
+        ->withQueryString();
+
+    return view('books.index', compact('books'));
+}
 
     // 2. Menampilkan form tambah buku
     public function create()
@@ -31,10 +41,16 @@ class BookController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'year' => 'required|integer|min:1000|max:' . date('Y'),
-            'stock' => 'required|integer|min:0',
+            'title'       => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\-\.,:;!?\'"]+$/'],
+            'author'      => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\.\',\-]+$/'],
+            'year'        => 'required|integer|min:1900|max:2026',
+            'stock'       => 'required|integer|min:1',
+        ], [
+            'title.regex'  => 'Judul buku hanya boleh berisi huruf (tidak boleh angka).',
+            'author.regex' => 'Nama penulis hanya boleh berisi huruf (tidak boleh angka).',
+            'year.min'     => 'Tahun terbit minimal tahun 1900.',
+            'year.max'     => 'Tahun terbit maksimal tahun 2026.',
+            'stock.min'    => 'Jumlah stok minimal adalah 1.',
         ]);
 
         $book = new Book();
@@ -70,10 +86,16 @@ class BookController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'title' => 'required|string|max:255',
-            'author' => 'required|string|max:255',
-            'year' => 'required|integer|min:1000|max:' . date('Y'),
-            'stock' => 'required|integer|min:0',
+            'title'       => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\-\.,:;!?\'"]+$/'],
+            'author'      => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s\.\',\-]+$/'],
+            'year'        => 'required|integer|min:1900|max:2026',
+            'stock'       => 'required|integer|min:1',
+        ], [
+            'title.regex'  => 'Judul buku hanya boleh berisi huruf (tidak boleh angka).',
+            'author.regex' => 'Nama penulis hanya boleh berisi huruf (tidak boleh angka).',
+            'year.min'     => 'Tahun terbit minimal tahun 1900.',
+            'year.max'     => 'Tahun terbit maksimal tahun 2026.',
+            'stock.min'    => 'Jumlah stok minimal adalah 1.',
         ]);
 
         $book->category_id = $validated['category_id'];

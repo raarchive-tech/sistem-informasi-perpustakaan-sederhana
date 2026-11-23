@@ -11,7 +11,7 @@ class CategoryController extends Controller
     // 1. Menampilkan daftar kategori
     public function index()
     {
-        $categories = Category::latest()->paginate(10);
+        $categories = Category::oldest()->paginate(10);
 
         return view('categories.index', compact('categories'));
     }
@@ -26,13 +26,17 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
-            'decsription' => 'nullable|string',
+            'name'        => ['required', 'string', 'max:255', 'unique:categories,name', 'regex:/^[a-zA-Z\s\-\.,()]+$/'],
+            'description' => ['nullable', 'string', 'regex:/^[a-zA-Z\s\-\.,()]+$/'],
+        ], [
+            'name.unique'       => 'Nama kategori sudah ada, silakan gunakan nama lain.',
+            'name.regex'        => 'Nama kategori hanya boleh berisi huruf dan spasi (tidak boleh angka).',
+            'description.regex' => 'Deskripsi kategori hanya boleh berisi huruf (tidak boleh angka).',
         ]);
 
         $category = new Category();
         $category->name = $validated['name'];
-        $category->decsription = $validated['decsription'] ?? null;
+        $category->description = $validated['description'] ?? null;
         $category->save();
 
         return redirect()->route('categories.index')
@@ -55,16 +59,20 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'decsription' => 'nullable|string',
+            'name'        => ['required', 'string', 'max:255', 'unique:categories,name,' . $category->id, 'regex:/^[a-zA-Z\s\-\.,()]+$/'],
+            'description' => ['nullable', 'string', 'regex:/^[a-zA-Z\s\-\.,()]+$/'],
+        ], [
+            'name.unique'       => 'Nama kategori sudah digunakan oleh kategori lain.',
+            'name.regex'        => 'Nama kategori hanya boleh berisi huruf dan spasi (tidak boleh angka).',
+            'description.regex' => 'Deskripsi kategori hanya boleh berisi huruf (tidak boleh angka).',
         ]);
 
         $category->name = $validated['name'];
-        $category->decsription = $validated['decsription'] ?? null;
+        $category->description = $validated['description'] ?? null;
         $category->save();
 
         return redirect()->route('categories.index')
-            ->with('success', 'Kategori berhasil diperbarui.');
+            ->with('success', 'Data kategori berhasil diperbarui.');
     }
 
     // 7. Menghapus kategori
