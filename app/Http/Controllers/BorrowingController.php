@@ -49,25 +49,30 @@ class BorrowingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'member_id' => 'required|exists:members,id',
-            'borrow_date' => 'required|date',
-            'details' => 'required|array|min:1',
-            'details.*.book_id' => 'required|distinct|exists:books,id',
+            'member_id'          => 'required|exists:members,id',
+            'borrow_date'        => 'required|date|date_equals:today',
+            'details'            => 'required|array|min:1',
+            'details.*.book_id'  => 'required|distinct|exists:books,id',
             'details.*.quantity' => 'required|integer|min:1',
+        ], [
+            'member_id.required'           => 'Anggota wajib dipilih.',
+            'borrow_date.date_equals'      => 'Tanggal peminjaman harus sesuai dengan tanggal hari ini.',
+            'details.*.book_id.required'   => 'Buku wajib dipilih.',
+            'details.*.book_id.distinct'   => 'Jangan memilih judul buku yang sama di dua baris berbeda.',
+            'details.*.quantity.min'       => 'Jumlah pinjam minimal adalah 1.',
         ]);
 
         DB::transaction(function () use ($validated) {
+            $today = now()->toDateString();
 
             // Membuat transaksi peminjaman
             $borrowing = Borrowing::create([
-                'member_id' => $validated['member_id'],
-                'user_id' => auth()->id(),
-                'borrow_date' => $validated['borrow_date'],
-                'due_date' => \Carbon\Carbon::parse(
-                    $validated['borrow_date']
-                )->addDays(7)->toDateString(),
+                'member_id'   => $validated['member_id'],
+                'user_id'     => auth()->id(),
+                'borrow_date' => $today,
+                'due_date'    => Carbon::parse($today)->addDays(7)->toDateString(),
                 'return_date' => null,
-                'status' => 'borrowed',
+                'status'      => 'borrowed',
             ]);
 
             // Menyimpan detail dan mengurangi stok buku
@@ -85,8 +90,8 @@ class BorrowingController extends Controller
 
                 BorrowingDetail::create([
                     'borrowing_id' => $borrowing->id,
-                    'book_id' => $book->id,
-                    'quantity' => $detail['quantity'],
+                    'book_id'      => $book->id,
+                    'quantity'     => $detail['quantity'],
                 ]);
 
                 $book->decrement('stock', $detail['quantity']);
@@ -135,7 +140,7 @@ class BorrowingController extends Controller
 
             $borrowing->update([
                 'return_date' => now()->toDateString(),
-                'status' => 'returned',
+                'status'      => 'returned',
             ]);
         });
 
