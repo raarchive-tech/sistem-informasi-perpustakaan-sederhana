@@ -7,7 +7,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\BorrowingController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\ProfileController; // Tambahkan ProfileController
+use App\Http\Controllers\ProfileController;
 
 // Redirect halaman utama ke login
 Route::get('/', function () {
