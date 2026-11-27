@@ -60,13 +60,13 @@ Sebelum menjalankan aplikasi ini secara lokal, pastikan perangkat telah terpasan
 ## Akun Demo
 Berikut adalah akun khusus demonstrasi yang dapat digunakan untuk pengujian aplikasi:
 Admin: admin@gmail.com — Password: password123
-Petugas: petugas@gmail.com — Password: password123
+Petugas: petugas1@gmail.com — Password: password123
 
 ## Screenshot Aplikasi
 1. [Halaman Login](docs/screenshots/login.png)
 2. [Halaman Dashboard](docs/screenshots/dashboard.png)
 3. [Halaman Kategori](docs/screenshots/kategori.png)
-4. [Halaman Buku & Detail Cover](docs/screenshots/buku.png) (docs/screenshots/detailbuku.png)
+4. [Halaman Buku & Detail Cover](docs/screenshots/buku.png)
 5. [Halaman Anggota](docs/screenshots/anggota.png)
 6. [Halaman Peminjaman & Pengembalian](docs/screenshots/peminjaman.png)
 7. [Halaman User Management (Admin)](docs/screenshots/users.png)
