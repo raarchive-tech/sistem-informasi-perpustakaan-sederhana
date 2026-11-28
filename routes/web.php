@@ -14,26 +14,24 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Route yang membutuhkan Login
 Route::middleware(['auth', 'verified'])->group(function () {
-    
-    // Dashboard
+    // Dashboard & Profil (Bisa diakses Admin & Petugas)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Profile Routes (Dibutuhkan oleh Navbar Breeze)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Modul CRUD Utama
+    // Fitur Operasional (Admin & Petugas)
     Route::resource('categories', CategoryController::class);
     Route::resource('books', BookController::class);
     Route::resource('members', MemberController::class);
-    Route::resource('users', UserController::class);
-
-    // Modul Peminjaman & Pengembalian
     Route::resource('borrowings', BorrowingController::class)->except(['edit', 'update', 'destroy']);
     Route::post('/borrowings/{borrowing}/return', [BorrowingController::class, 'returnBook'])->name('borrowings.return');
+
+    // Khusus Admin (Terkunci oleh Middleware 'admin')
+    Route::middleware('admin')->group(function () {
+        Route::resource('users', UserController::class);
+    });
 });
 
 require __DIR__.'/auth.php';
